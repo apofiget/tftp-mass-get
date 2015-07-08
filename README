@@ -1,0 +1,35 @@
+TFTP mass get utility v0.1
+
+Dependencies
+-----------
+
+- gcc
+- automake && autoconf
+- libcurl
+- libconfig
+- openssl
+
+
+How to build?
+------------
+
+Just run: ./build.sh
+
+
+Configuration params
+--------------------
+
+savePath - absolute path to directory where save downloaded files
+maxThreads - maximum threads which program fork
+filesPerThread - count of downloaded files per thread
+
+sources - section which contain at least one data source configuration like that:
+{
+ip = "10.245.177.21"; - IP address of device from download file
+file = "srkn-AP.backup"; - filename to download from given IP
+saveWithTime = 1; - save file with prefix like DD-MM-YYYY-HH-MM
+}
+
+See example.cfg for details.
+
+Author: Andrey Andruschenko <apofiget@gmail.com>
