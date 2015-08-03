@@ -8,7 +8,7 @@
  * Version: 0.1
  * Last-Updated:
  *           By:
- *     Update #: 282
+ *     Update #: 283
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords:  TFTP, backup
  * Compatibility:
@@ -221,6 +221,7 @@ void *get_request(void *arg) {
             syslog(LOG_ERR, "[%lu] Can create file in %s %s", threadId, list->links[cur_idx]->dstDir, strerror(errno));
             free(url);
             free(dstFile);
+            __FREE(datePrefix);
             continue;
         }
 
