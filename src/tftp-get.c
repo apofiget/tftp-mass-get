@@ -8,7 +8,7 @@
  * Version: 0.1
  * Last-Updated:
  *           By:
- *     Update #: 224
+ *     Update #: 228
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords:  TFTP, backup
  * Compatibility:
@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <syscall.h>
+#include <time.h>
 
 #include <libconfig.h>
 #include <curl/curl.h>
@@ -241,6 +242,25 @@ static size_t wc_cb(void *contents, size_t size, size_t nmemb,
     }
 
     return bytes_writed;
+}
+
+static char* get_formated_date(const char *format) {
+
+    time_t now;
+    struct tm *ltime;
+    char *formated_date = NULL;
+
+    __MALLOC(formated_date, char*, __MAX_DATE_LEN_);
+
+    now = time(NULL);
+    ltime = localtime(&now);
+
+    if(strftime(formated_date, __MAX_DATE_LEN_, format, ltime) == 0) {
+        free(formated_date);
+        formated_date = NULL;
+    }
+
+    return formated_date;
 }
 
 /* tftp-get.c ends here */

@@ -8,7 +8,7 @@
  * Version:
  * Last-Updated:
  *           By:
- *     Update #: 27
+ *     Update #: 32
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords: TFTP, backup
  * Compatibility:
@@ -26,13 +26,18 @@
 #define __PATH_OPT_             "savePath"
 #define __FILES_PER_THREAD_OPT_ "filesPerThread"
 #define __THREADS_OPT_          "maxThreads"
+#define __DATE_TPL_OPT_         "dateTemplate"
 #define __THREADS_DEFAULT_      32
 #define __FILES_PER_THREAD_     3
 #define __TFTP_BLK_SIZE_        1024L
 #define __CURL_CONN_TIMEOUT_    40L
 
+#define __MAX_DATE_LEN_         256
+#define __DEFAULT_DATE_TEMPLATE_ "%Y%m%d-%H%M"
+
 typedef struct __thread_data_ {
     unsigned int useTime;
+    char *dateTpl;
     char *ip;
     char *filename;
     char *dstDir;
