@@ -15,7 +15,7 @@ AC_CHECK_LIB(curl, curl_global_init, [ LIBS="-lcurl $LIBS" ], [AC_MSG_ERROR([lib
 AC_CHECK_LIB(config, config_init, [ LIBS="-lconfig $LIBS" ], [AC_MSG_ERROR([libconfig-dev not found])])
 
 # Checks for header files.
-AC_CHECK_HEADERS([fcntl.h inttypes.h stdlib.h string.h unistd.h curl/curl.h])
+AC_CHECK_HEADERS([fcntl.h time.h inttypes.h stdlib.h string.h unistd.h curl/curl.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
