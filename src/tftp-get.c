@@ -8,7 +8,7 @@
  * Version: 0.1
  * Last-Updated:
  *           By:
- *     Update #: 228
+ *     Update #: 242
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords:  TFTP, backup
  * Compatibility:
@@ -45,7 +45,7 @@ pthread_mutex_t idx_mtx;
 int main(int argc, char *argv[]) {
 
     char *configFile = NULL, *savePath;
-    char *ip, *file;
+    char *ip, *file, *dateTpl;
     config_t config;
     config_setting_t *sources = NULL;
     int threads, i, saveWithTime, opt, filesPerThread, settings_count;
@@ -114,9 +114,9 @@ int main(int argc, char *argv[]) {
 
     for(i = 0; i < settings_count; i++) {
 
-        if(!(config_setting_lookup_string(config_setting_get_elem(sources, i), "ip", (const char**)&ip)
-             && config_setting_lookup_string(config_setting_get_elem(sources, i), "file", (const char**)&file)
-             && config_setting_lookup_int(config_setting_get_elem(sources, i), "saveWithTime", &saveWithTime)))
+        if(!(config_setting_lookup_string(config_setting_get_elem(sources, i), __IP_PAR_, (const char**)&ip)
+             && config_setting_lookup_string(config_setting_get_elem(sources, i), __FILE_PAR_, (const char**)&file)
+             && config_setting_lookup_int(config_setting_get_elem(sources, i), __WITHTIME_PAR_, &saveWithTime)))
             continue;
         __MALLOC(list.links[i], thread_data_t*, sizeof(thread_data_t));
 
@@ -128,6 +128,17 @@ int main(int argc, char *argv[]) {
 
         __MALLOC(list.links[i]->dstDir, char*, sizeof(char) * (strlen(savePath) + 1));
         strcpy(list.links[i]->dstDir, savePath);
+
+        if(saveWithTime != 0)
+            if(!(config_setting_lookup_string(config_setting_get_elem(sources, i), __DATETPL_PAR_, (const char**)&dateTpl))) {
+                __MALLOC(list.links[i]->dateTpl, char*, strlen(__DEFAULT_DATE_TEMPLATE_) + 1);
+                strcpy(list.links[i]->dateTpl, __DEFAULT_DATE_TEMPLATE_);
+            } else {
+                __MALLOC(list.links[i]->dateTpl, char*, strlen(dateTpl) + 1);
+                strcpy(list.links[i]->dateTpl, dateTpl);
+            }
+        else list.links[i]->dateTpl = NULL;
+
         list.idx++;
 
         printf("IP: %s  File: %s\n", list.links[i]->ip, list.links[i]->filename);
