@@ -8,7 +8,7 @@
  * Version:
  * Last-Updated:
  *           By:
- *     Update #: 36
+ *     Update #: 38
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords: TFTP, backup
  * Compatibility:
@@ -38,7 +38,7 @@
 #define __CURL_CONN_TIMEOUT_    40L
 
 #define __MAX_DATE_LEN_         256
-#define __DEFAULT_DATE_TEMPLATE_ "%Y%m%d-%H%M"
+#define __DEFAULT_DATE_TEMPLATE_ "%Y%m%d-%H%M-"
 
 typedef struct __thread_data_ {
     unsigned int useTime;
@@ -57,6 +57,12 @@ typedef struct __f_list_ {
     if((v = (t)malloc(s)) == NULL) {                    \
         syslog(LOG_ERR, "Memory allocation error!\n");  \
         exit(EXIT_FAILURE); }
+
+#define __FREE(v)                               \
+    if(v != NULL) {                             \
+        free(v);                                \
+        v = NULL;                               \
+    }                                           \
 
 #endif
 /* tftp-get.h ends here */

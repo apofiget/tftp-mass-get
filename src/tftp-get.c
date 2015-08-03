@@ -8,7 +8,7 @@
  * Version: 0.1
  * Last-Updated:
  *           By:
- *     Update #: 242
+ *     Update #: 282
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords:  TFTP, backup
  * Compatibility:
@@ -39,6 +39,7 @@
 
 static size_t wc_cb(void*, size_t, size_t, void*);
 static void *get_request(void*);
+static char *get_formated_date(const char*);
 
 pthread_mutex_t idx_mtx;
 
@@ -115,10 +116,15 @@ int main(int argc, char *argv[]) {
     for(i = 0; i < settings_count; i++) {
 
         if(!(config_setting_lookup_string(config_setting_get_elem(sources, i), __IP_PAR_, (const char**)&ip)
-             && config_setting_lookup_string(config_setting_get_elem(sources, i), __FILE_PAR_, (const char**)&file)
-             && config_setting_lookup_int(config_setting_get_elem(sources, i), __WITHTIME_PAR_, &saveWithTime)))
+             && config_setting_lookup_string(config_setting_get_elem(sources, i), __FILE_PAR_, (const char**)&file)))
             continue;
+
+        if(!config_setting_lookup_int(config_setting_get_elem(sources, i), __WITHTIME_PAR_, &saveWithTime))
+            saveWithTime = 0;
+
         __MALLOC(list.links[i], thread_data_t*, sizeof(thread_data_t));
+
+        list.links[i]->useTime = saveWithTime;
 
         __MALLOC(list.links[i]->ip, char*, sizeof(char) * (strlen(ip) + 1));
         strcpy(list.links[i]->ip, ip);
@@ -129,7 +135,7 @@ int main(int argc, char *argv[]) {
         __MALLOC(list.links[i]->dstDir, char*, sizeof(char) * (strlen(savePath) + 1));
         strcpy(list.links[i]->dstDir, savePath);
 
-        if(saveWithTime != 0)
+        if(list.links[i]->useTime != 0)
             if(!(config_setting_lookup_string(config_setting_get_elem(sources, i), __DATETPL_PAR_, (const char**)&dateTpl))) {
                 __MALLOC(list.links[i]->dateTpl, char*, strlen(__DEFAULT_DATE_TEMPLATE_) + 1);
                 strcpy(list.links[i]->dateTpl, __DEFAULT_DATE_TEMPLATE_);
@@ -140,8 +146,6 @@ int main(int argc, char *argv[]) {
         else list.links[i]->dateTpl = NULL;
 
         list.idx++;
-
-        printf("IP: %s  File: %s\n", list.links[i]->ip, list.links[i]->filename);
 
     }
 
@@ -175,7 +179,8 @@ void *get_request(void *arg) {
     CURL *curl;
     CURLcode res;
     int fd, cur_idx;
-    char *url = NULL, *dstFile;
+    char *url = NULL, *dstFile, *datePrefix = NULL;
+    unsigned long threadId = syscall(SYS_gettid);
 
 
     curl = curl_easy_init();
@@ -198,46 +203,59 @@ void *get_request(void *arg) {
         __MALLOC(url, char*, sizeof(char) *(strlen(list->links[cur_idx]->ip) + strlen(list->links[cur_idx]->filename) + 9));
         sprintf(url, "tftp://%s/%s",list->links[cur_idx]->ip, list->links[cur_idx]->filename);
 
-        __MALLOC(dstFile, char*, sizeof(char) * (strlen(list->links[cur_idx]->filename) + strlen(list->links[cur_idx]->dstDir) + 1));
-        sprintf(dstFile, "%s%s", list->links[cur_idx]->dstDir, list->links[cur_idx]->filename);
+        if(list->links[cur_idx]->useTime != 0)
+            if((datePrefix = get_formated_date((const char*)list->links[cur_idx]->dateTpl)) == NULL) {
+                syslog(LOG_ERR, "[%lu] Error in template: %s", threadId, list->links[cur_idx]->dateTpl);
+                free(url);
+                continue;
+            } else {
+                __MALLOC(dstFile, char*, sizeof(char) * (strlen(datePrefix) + strlen(list->links[cur_idx]->filename) + strlen(list->links[cur_idx]->dstDir) + 1));
+                sprintf(dstFile, "%s%s%s", list->links[cur_idx]->dstDir, datePrefix, list->links[cur_idx]->filename);
+            }
+        else {
+            __MALLOC(dstFile, char*, sizeof(char) * (strlen(list->links[cur_idx]->filename) + strlen(list->links[cur_idx]->dstDir) + 1));
+            sprintf(dstFile, "%s%s", list->links[cur_idx]->dstDir, list->links[cur_idx]->filename);
+        }
 
         if(access(list->links[cur_idx]->dstDir, W_OK) == -1) {
-            syslog(LOG_ERR, "[%lu] Can create file in %s %s", syscall(SYS_gettid), list->links[cur_idx]->dstDir, strerror(errno));
+            syslog(LOG_ERR, "[%lu] Can create file in %s %s", threadId, list->links[cur_idx]->dstDir, strerror(errno));
             free(url);
             free(dstFile);
             continue;
         }
 
-        if((fd = open((const char*)dstFile, O_RDWR | O_CREAT , S_IRUSR | S_IWUSR | S_IRGRP)) == -1) {
-            syslog(LOG_ERR, "[%lu] Can't create file: %s %s", syscall(SYS_gettid), dstFile, strerror(errno));
-            free(url);
-            free(dstFile);
-            continue;
+        if((fd = open((const char*)dstFile, O_RDWR | O_CREAT , S_IRUSR | S_IWUSR | S_IRGRP)) == -1)
+            syslog(LOG_ERR, "[%lu] Can't create file: %s %s", threadId, dstFile, strerror(errno));
+        else {
+
+            syslog(LOG_NOTICE, "[%lu] tftp://%s/%s -> %s", threadId, list->links[cur_idx]->ip, list->links[cur_idx]->filename, dstFile);
+
+            curl_easy_setopt(curl, CURLOPT_TFTP_BLKSIZE, __TFTP_BLK_SIZE_);
+            curl_easy_setopt(curl, CURLOPT_TIMEOUT, __CURL_CONN_TIMEOUT_);
+            curl_easy_setopt(curl, CURLOPT_URL, url);
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, wc_cb);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&fd);
+
+            res = curl_easy_perform(curl);
+
+            if(res != CURLE_OK)
+                syslog(LOG_ERR, "[%lu] %s, %s\n", threadId, curl_easy_strerror(res), list->links[cur_idx]->ip);
+
+            close(fd);
         }
-
-        curl_easy_setopt(curl, CURLOPT_TFTP_BLKSIZE, __TFTP_BLK_SIZE_);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, __CURL_CONN_TIMEOUT_);
-        curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, wc_cb);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&fd);
-
-        res = curl_easy_perform(curl);
-
-        if(res != CURLE_OK)
-            syslog(LOG_ERR, "[%lu] %s, %s\n", syscall(SYS_gettid), curl_easy_strerror(res), list->links[cur_idx]->ip);
-
-        close(fd);
 
         free(list->links[cur_idx]->ip);
+        free(list->links[cur_idx]->dateTpl);
         free(list->links[cur_idx]->filename);
         free(list->links[cur_idx]->dstDir);
         free(list->links[cur_idx]);
         free(url);
         free(dstFile);
+        __FREE(datePrefix);
     }
 
     curl_easy_cleanup(curl);
-    syslog(LOG_NOTICE, "[%lu] Terminating...\n", syscall(SYS_gettid));
+    syslog(LOG_NOTICE, "[%lu] Terminating...\n", threadId);
     return NULL;
 }
 

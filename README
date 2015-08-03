@@ -1,4 +1,4 @@
-TFTP mass get utility v0.1
+TFTP mass get utility v0.2
 
 Dependencies
 -----------
@@ -28,6 +28,7 @@ sources - section which contain at least one data source configuration like that
 ip = "10.245.177.21"; - IP address of device from download file
 file = "srkn-AP.backup"; - filename to download from given IP
 saveWithTime = 1; - save file with prefix like DD-MM-YYYY-HH-MM
+dateTemplate = "" - prefix template, according man 3 strftime; default template - "%Y%m%d-%H%M-"
 }
 
 See example.cfg for details.
