@@ -8,7 +8,7 @@
  * Version:
  * Last-Updated:
  *           By:
- *     Update #: 38
+ *     Update #: 40
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords: TFTP, backup
  * Compatibility:
@@ -38,7 +38,7 @@
 #define __CURL_CONN_TIMEOUT_    40L
 
 #define __MAX_DATE_LEN_         256
-#define __DEFAULT_DATE_TEMPLATE_ "%Y%m%d-%H%M-"
+#define __DEFAULT_DATE_TEMPLATE_ "%Y%m%d-%H-%M-"
 
 typedef struct __thread_data_ {
     unsigned int useTime;
