@@ -8,7 +8,7 @@
  * Version: 0.1
  * Last-Updated:
  *           By:
- *     Update #: 283
+ *     Update #: 287
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords:  TFTP, backup
  * Compatibility:
@@ -46,7 +46,7 @@ pthread_mutex_t idx_mtx;
 int main(int argc, char *argv[]) {
 
     char *configFile = NULL, *savePath;
-    char *ip, *file, *dateTpl;
+    char *ip, *file, *dateTpl, *defaultPrefixTemplate;
     config_t config;
     config_setting_t *sources = NULL;
     int threads, i, saveWithTime, opt, filesPerThread, settings_count;
@@ -95,6 +95,11 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    if(!(config_lookup_string(&config, __DEF_TPL_OPT_, (const char**)&defaultPrefixTemplate))) {
+        __MALLOC(defaultPrefixTemplate, char*, sizeof(__DEFAULT_DATE_TEMPLATE_));
+        strcpy(defaultPrefixTemplate, __DEFAULT_DATE_TEMPLATE_);
+    }
+
     if((config_lookup_int(&config, __THREADS_OPT_, &threads)) != CONFIG_TRUE) {
         syslog(LOG_WARNING, "No %s param in config, will use default value %d", __THREADS_OPT_, __THREADS_DEFAULT_);
         threads = __THREADS_DEFAULT_;
@@ -137,8 +142,8 @@ int main(int argc, char *argv[]) {
 
         if(list.links[i]->useTime != 0)
             if(!(config_setting_lookup_string(config_setting_get_elem(sources, i), __DATETPL_PAR_, (const char**)&dateTpl))) {
-                __MALLOC(list.links[i]->dateTpl, char*, strlen(__DEFAULT_DATE_TEMPLATE_) + 1);
-                strcpy(list.links[i]->dateTpl, __DEFAULT_DATE_TEMPLATE_);
+                __MALLOC(list.links[i]->dateTpl, char*, strlen(defaultPrefixTemplate) + 1);
+                strcpy(list.links[i]->dateTpl, defaultPrefixTemplate);
             } else {
                 __MALLOC(list.links[i]->dateTpl, char*, strlen(dateTpl) + 1);
                 strcpy(list.links[i]->dateTpl, dateTpl);

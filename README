@@ -1,4 +1,4 @@
-TFTP mass get utility v0.2
+TFTP mass get utility v0.3
 
 Dependencies
 -----------
@@ -22,13 +22,15 @@ Configuration params
 savePath - absolute path to directory where save downloaded files
 maxThreads - maximum threads which program fork
 filesPerThread - count of downloaded files per thread
+defaultTemplate - default prefix template according man 3 strftime; String with this 
+                  template will be added as prefix to saved file.
 
 sources - section which contain at least one data source configuration like that:
 {
 ip = "10.245.177.21"; - IP address of device from download file
 file = "srkn-AP.backup"; - filename to download from given IP
-saveWithTime = 1; - save file with prefix like DD-MM-YYYY-HH-MM
-dateTemplate = "" - prefix template, according man 3 strftime; default template - "%Y%m%d-%H%M-"
+saveWithTime = 1; - save file with date/time prefix like DD-MM-YYYY-HH-MM
+dateTemplate = "" - prefix template, according man 3 strftime; hardcoded template - "%Y%m%d-%H%M-"
 }
 
 See example.cfg for details.
