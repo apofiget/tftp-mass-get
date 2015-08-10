@@ -8,7 +8,7 @@
  * Version: 0.1
  * Last-Updated:
  *           By:
- *     Update #: 287
+ *     Update #: 288
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords:  TFTP, backup
  * Compatibility:
@@ -230,7 +230,7 @@ void *get_request(void *arg) {
             continue;
         }
 
-        if((fd = open((const char*)dstFile, O_RDWR | O_CREAT , S_IRUSR | S_IWUSR | S_IRGRP)) == -1)
+        if((fd = open((const char*)dstFile, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR | S_IRGRP)) == -1)
             syslog(LOG_ERR, "[%lu] Can't create file: %s %s", threadId, dstFile, strerror(errno));
         else {
 
