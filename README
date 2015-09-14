@@ -19,18 +19,20 @@ Just run: ./build.sh
 Configuration params
 --------------------
 
-savePath - absolute path to directory where save downloaded files
-maxThreads - maximum threads which program fork
-filesPerThread - count of downloaded files per thread
+savePath - absolute path to directory where save downloaded files, mandatory parameter
+maxThreads - maximum threads which program fork, optional parameter
+filesPerThread - count of downloaded files per thread, optional parameter
 defaultTemplate - default prefix template according man 3 strftime; String with this 
-                  template will be added as prefix to saved file.
+                  template will be added as prefix to saved file. Optional parameter.
+Config should contain section named 'sources' which contain at least one data source configuration.
+It should look like:
 
-sources - section which contain at least one data source configuration like that:
+sources
 {
-ip = "10.245.177.21"; - IP address of device from download file
-file = "srkn-AP.backup"; - filename to download from given IP
-saveWithTime = 1; - save file with date/time prefix like DD-MM-YYYY-HH-MM
-dateTemplate = "" - prefix template, according man 3 strftime; hardcoded template - "%Y%m%d-%H%M-"
+ip = "10.245.177.21"; - IP address of device from download file, mandatory parameter
+file = "srkn-AP.backup"; - filename to download from given IP, mandatory parameter
+saveWithTime = 1; - save file with date/time prefix like DD-MM-YYYY-HH-MM, optional parameter
+dateTemplate = "" - prefix template, according man 3 strftime; hardcoded template - "%Y%m%d-%H%M-", optional parameter
 }
 
 See example.cfg for details.
