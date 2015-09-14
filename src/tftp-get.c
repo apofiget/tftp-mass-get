@@ -8,7 +8,7 @@
  * Version: 0.1
  * Last-Updated:
  *           By:
- *     Update #: 288
+ *     Update #: 303
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords:  TFTP, backup
  * Compatibility:
@@ -184,18 +184,17 @@ void *get_request(void *arg) {
     CURL *curl;
     CURLcode res;
     int fd, cur_idx;
-    char *url = NULL, *dstFile, *datePrefix = NULL;
+    char *url = NULL, *dstFile, *bFile, *datePrefix = NULL;
     unsigned long threadId = syscall(SYS_gettid);
 
+    syslog(LOG_NOTICE, "[%lu] Starting...", threadId);
 
     curl = curl_easy_init();
 
     if(!curl) {
-        fprintf(stderr, "libcurl init failure!\n");
+        syslog(LOG_ERR, "[%lu] libcurl init failure!", threadId);
         exit(EXIT_FAILURE);
     }
-
-    syslog(LOG_NOTICE, "[%lu] Starting...\n", syscall(SYS_gettid));
 
     while(list->idx > 0) {
 
@@ -208,18 +207,20 @@ void *get_request(void *arg) {
         __MALLOC(url, char*, sizeof(char) *(strlen(list->links[cur_idx]->ip) + strlen(list->links[cur_idx]->filename) + 9));
         sprintf(url, "tftp://%s/%s",list->links[cur_idx]->ip, list->links[cur_idx]->filename);
 
+        bFile = basename(list->links[cur_idx]->filename);
+
         if(list->links[cur_idx]->useTime != 0)
             if((datePrefix = get_formated_date((const char*)list->links[cur_idx]->dateTpl)) == NULL) {
                 syslog(LOG_ERR, "[%lu] Error in template: %s", threadId, list->links[cur_idx]->dateTpl);
                 free(url);
                 continue;
             } else {
-                __MALLOC(dstFile, char*, sizeof(char) * (strlen(datePrefix) + strlen(list->links[cur_idx]->filename) + strlen(list->links[cur_idx]->dstDir) + 1));
-                sprintf(dstFile, "%s%s%s", list->links[cur_idx]->dstDir, datePrefix, list->links[cur_idx]->filename);
+                __MALLOC(dstFile, char*, sizeof(char) * (strlen(datePrefix) + strlen(bFile) + strlen(list->links[cur_idx]->dstDir) + 1));
+                sprintf(dstFile, "%s%s%s", list->links[cur_idx]->dstDir, datePrefix, bFile);
             }
         else {
-            __MALLOC(dstFile, char*, sizeof(char) * (strlen(list->links[cur_idx]->filename) + strlen(list->links[cur_idx]->dstDir) + 1));
-            sprintf(dstFile, "%s%s", list->links[cur_idx]->dstDir, list->links[cur_idx]->filename);
+            __MALLOC(dstFile, char*, sizeof(char) * (strlen(bFile) + strlen(list->links[cur_idx]->dstDir) + 1));
+            sprintf(dstFile, "%s%s", list->links[cur_idx]->dstDir, bFile);
         }
 
         if(access(list->links[cur_idx]->dstDir, W_OK) == -1) {
@@ -229,7 +230,8 @@ void *get_request(void *arg) {
             __FREE(datePrefix);
             continue;
         }
-
+        /* Add O_EXCL flag as issue, for case when user add more that one IP with same filename in
+         * config file */
         if((fd = open((const char*)dstFile, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR | S_IRGRP)) == -1)
             syslog(LOG_ERR, "[%lu] Can't create file: %s %s", threadId, dstFile, strerror(errno));
         else {
