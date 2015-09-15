@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.63])
-AC_INIT([TFTP mass get tool], [0.3.1], [https://github.com/apofiget/tftp-mass-get/issues], [tftp_mass_get], [https://github.com/apofiget/tftp-mass-get])
+AC_INIT([TFTP mass get tool], [0.4], [https://github.com/apofiget/tftp-mass-get/issues], [tftp_mass_get], [https://github.com/apofiget/tftp-mass-get])
 AC_CONFIG_SRCDIR([src/tftp-get.c])
 AM_INIT_AUTOMAKE
 

@@ -8,7 +8,7 @@
  * Version: 0.1
  * Last-Updated:
  *           By:
- *     Update #: 310
+ *     Update #: 321
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords:  TFTP, backup
  * Compatibility:
@@ -45,7 +45,7 @@ pthread_mutex_t idx_mtx;
 
 int main(int argc, char *argv[]) {
 
-    char *configFile = NULL, *savePath;
+    char *configFile = NULL, *globalSavePath, *sourceSavePath;
     char *ip, *file, *dateTpl, *defaultPrefixTemplate;
     config_t config;
     config_setting_t *sources = NULL;
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if(!(config_lookup_string(&config, __PATH_OPT_, (const char**)&savePath))) {
+    if(!(config_lookup_string(&config, __PATH_OPT_, (const char**)&globalSavePath))) {
         syslog(LOG_ERR, "No %s param in config file!", __PATH_OPT_);
         exit(EXIT_FAILURE);
     }
@@ -122,8 +122,10 @@ int main(int argc, char *argv[]) {
     for(i = 0; i < settings_count; i++) {
 
         if(!(config_setting_lookup_string(config_setting_get_elem(sources, i), __IP_PAR_, (const char**)&ip)
-             && config_setting_lookup_string(config_setting_get_elem(sources, i), __FILE_PAR_, (const char**)&file)))
+             && config_setting_lookup_string(config_setting_get_elem(sources, i), __FILE_PAR_, (const char**)&file))) {
+            syslog(LOG_WARNING, "Section not contain mandatory param(s)!");
             continue;
+        }
 
         if(!config_setting_lookup_int(config_setting_get_elem(sources, i), __WITHTIME_PAR_, &saveWithTime))
             saveWithTime = 0;
@@ -138,8 +140,13 @@ int main(int argc, char *argv[]) {
         __MALLOC(list.links[i]->filename, char*, sizeof(char) * (strlen(file) + 1));
         strcpy(list.links[i]->filename, file);
 
-        __MALLOC(list.links[i]->dstDir, char*, sizeof(char) * (strlen(savePath) + 1));
-        strcpy(list.links[i]->dstDir, savePath);
+        if(config_setting_lookup_string(config_setting_get_elem(sources, i), __PATH_OPT_, (const char**)&sourceSavePath)) {
+            __MALLOC(list.links[i]->dstDir, char*, sizeof(char) * (strlen(sourceSavePath) + 1));
+            strcpy(list.links[i]->dstDir, sourceSavePath);
+        } else {
+            __MALLOC(list.links[i]->dstDir, char*, sizeof(char) * (strlen(globalSavePath) + 1));
+            strcpy(list.links[i]->dstDir, globalSavePath);
+        }
 
         if(list.links[i]->useTime != 0)
             if(!(config_setting_lookup_string(config_setting_get_elem(sources, i), __DATETPL_PAR_, (const char**)&dateTpl))) {
@@ -231,9 +238,8 @@ void *get_request(void *arg) {
             __FREE(datePrefix);
             continue;
         }
-        /* Add O_EXCL flag as issue, for case when user add more that one IP with same filename in
-         * config file */
-        if((fd = open((const char*)dstFile, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR | S_IRGRP)) == -1)
+
+        if((fd = open((const char*)dstFile, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP)) == -1)
             syslog(LOG_ERR, "[%lu] Can't create file: %s %s", threadId, dstFile, strerror(errno));
         else {
 

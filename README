@@ -1,4 +1,4 @@
-TFTP mass get utility v0.3.1
+TFTP mass get utility v0.4
 
 Dependencies
 -----------
@@ -33,6 +33,7 @@ ip = "10.245.177.21"; - IP address of device from download file, mandatory param
 file = "srkn-AP.backup"; - filename to download from given IP, mandatory parameter
 saveWithTime = 1; - save file with date/time prefix like DD-MM-YYYY-HH-MM, optional parameter
 dateTemplate = "" - prefix template, according man 3 strftime; hardcoded template - "%Y%m%d-%H%M-", optional parameter
+savePath = ""; - absolute path to directory where save downloaded files, optional parameter in sources section
 }
 
 See example.cfg for details.
