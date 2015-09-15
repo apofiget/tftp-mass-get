@@ -8,7 +8,7 @@
  * Version: 0.1
  * Last-Updated:
  *           By:
- *     Update #: 303
+ *     Update #: 310
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords:  TFTP, backup
  * Compatibility:
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-/* Read config and retrieve mandatory params */
+/* Retrieve global params */
     if(!config_read_file(&config, configFile)) {
         syslog(LOG_ERR, "Config error: %d - %s\n", config_error_line(&config), config_error_text(&config));
         config_destroy(&config);
@@ -118,6 +118,7 @@ int main(int argc, char *argv[]) {
     settings_count = config_setting_length(sources);
     __MALLOC(list.links, thread_data_t**, sizeof(thread_data_t*) * settings_count);
 
+/* Retrieve per-source params */
     for(i = 0; i < settings_count; i++) {
 
         if(!(config_setting_lookup_string(config_setting_get_elem(sources, i), __IP_PAR_, (const char**)&ip)
@@ -158,13 +159,13 @@ int main(int argc, char *argv[]) {
         : (list.idx / filesPerThread) > threads ? threads : (list.idx % filesPerThread) \
         ? (list.idx / filesPerThread) + 1 : (list.idx / filesPerThread);
 
-    fprintf(stdout, "Files download: %d, threads: %d\n", list.idx, threads);
+    syslog(LOG_NOTICE, "Files to download: %d, threads: %d", list.idx, threads);
 
     pthread_mutex_init(&idx_mtx, NULL);
 
     for(i = 0; i < threads; i++) {
         if(pthread_create(&pthread[i], NULL, get_request, &list)) {
-            fprintf(stderr, "Uploader thread creation failure: %s", strerror(errno));
+            syslog(LOG_ERR, "Uploader thread creation failure: %s", strerror(errno));
             exit(EXIT_FAILURE);
         }
     }

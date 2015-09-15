@@ -20,7 +20,7 @@ Configuration params
 --------------------
 
 savePath - absolute path to directory where save downloaded files, mandatory parameter
-maxThreads - maximum threads which program fork, optional parameter
+maxThreads - maximum threads which program can fork, optional parameter
 filesPerThread - count of downloaded files per thread, optional parameter
 defaultTemplate - default prefix template according man 3 strftime; String with this 
                   template will be added as prefix to saved file. Optional parameter.
