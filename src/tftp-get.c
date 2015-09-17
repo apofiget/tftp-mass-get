@@ -8,7 +8,7 @@
  * Version: 0.1
  * Last-Updated:
  *           By:
- *     Update #: 321
+ *     Update #: 330
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords:  TFTP, backup
  * Compatibility:
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
     char *ip, *file, *dateTpl, *defaultPrefixTemplate;
     config_t config;
     config_setting_t *sources = NULL;
-    int threads, i, saveWithTime, opt, filesPerThread, settings_count;
+    int maxThreads, runThreads, i, saveWithTime, opt, filesPerThread, settings_count;
     f_list_t list = {.idx = 0};
     pthread_t pthread[__THREADS_DEFAULT_];
 
@@ -100,10 +100,10 @@ int main(int argc, char *argv[]) {
         strcpy(defaultPrefixTemplate, __DEFAULT_DATE_TEMPLATE_);
     }
 
-    if((config_lookup_int(&config, __THREADS_OPT_, &threads)) != CONFIG_TRUE) {
+    if((config_lookup_int(&config, __THREADS_OPT_, &maxThreads)) != CONFIG_TRUE) {
         syslog(LOG_WARNING, "No %s param in config, will use default value %d", __THREADS_OPT_, __THREADS_DEFAULT_);
-        threads = __THREADS_DEFAULT_;
-    } else threads = threads > __THREADS_DEFAULT_ ? __THREADS_DEFAULT_ : threads;
+        maxThreads = __THREADS_DEFAULT_;
+    } else maxThreads = maxThreads > __THREADS_DEFAULT_ ? __THREADS_DEFAULT_ : maxThreads;
 
     if((config_lookup_int(&config, __FILES_PER_THREAD_OPT_, &filesPerThread)) != CONFIG_TRUE) {
         syslog(LOG_WARNING, "No %s param in config, will use default value %d", __FILES_PER_THREAD_OPT_, __FILES_PER_THREAD_);
@@ -162,22 +162,22 @@ int main(int argc, char *argv[]) {
 
     }
 
-    threads = (list.idx <= 0 ) ? 0 : (list.idx / filesPerThread) < 1 ? 1 \
-        : (list.idx / filesPerThread) > threads ? threads : (list.idx % filesPerThread) \
+    runThreads = (list.idx <= 0 ) ? 0 : (list.idx / filesPerThread) < 1 ? 1 \
+        : (list.idx / filesPerThread) > maxThreads ? maxThreads : (list.idx % filesPerThread) \
         ? (list.idx / filesPerThread) + 1 : (list.idx / filesPerThread);
 
-    syslog(LOG_NOTICE, "Files to download: %d, threads: %d", list.idx, threads);
+    syslog(LOG_NOTICE, "Files to download: %d, threads: %d", list.idx, runThreads);
 
     pthread_mutex_init(&idx_mtx, NULL);
 
-    for(i = 0; i < threads; i++) {
+    for(i = 0; i < runThreads; i++) {
         if(pthread_create(&pthread[i], NULL, get_request, &list)) {
             syslog(LOG_ERR, "Uploader thread creation failure: %s", strerror(errno));
             exit(EXIT_FAILURE);
         }
     }
 
-    for(i = 0; i < threads; i++)
+    for(i = 0; i < runThreads; i++)
         pthread_join(pthread[i], NULL);
 
     config_destroy(&config);

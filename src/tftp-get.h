@@ -8,7 +8,7 @@
  * Version:
  * Last-Updated:
  *           By:
- *     Update #: 41
+ *     Update #: 42
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords: TFTP, backup
  * Compatibility:
@@ -33,7 +33,7 @@
 #define __FILE_PAR_             "file"
 #define __WITHTIME_PAR_         "saveWithTime"
 
-#define __THREADS_DEFAULT_      32
+#define __THREADS_DEFAULT_      128
 #define __FILES_PER_THREAD_     3
 #define __TFTP_BLK_SIZE_        1024L
 #define __CURL_CONN_TIMEOUT_    40L
