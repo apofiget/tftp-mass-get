@@ -15,8 +15,6 @@ Dependencies
 - automake && autoconf
 - libcurl
 - libconfig
-- openssl
-
 
 How to build?
 ------------
