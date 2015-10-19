@@ -1,5 +1,13 @@
 TFTP mass get utility v0.4
 
+Description
+-----------
+
+TFTP client, which get remote files(pre-configured) from TFTP-enabled devices and 
+save them it in pre-configured directory, and, if configured, add date/time prefix to the filename.
+Could be used as backup agent for TFTP-enabled network devices which don't have own TFTP client.
+We use it for backup configuration from Mikrotik devices.
+
 Dependencies
 -----------
 
@@ -14,7 +22,6 @@ How to build?
 ------------
 
 Just run: ./build.sh
-
 
 Configuration params
 --------------------

@@ -8,7 +8,7 @@
  * Version: 0.1
  * Last-Updated:
  *           By:
- *     Update #: 330
+ *     Update #: 334
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords:  TFTP, backup
  * Compatibility:
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     f_list_t list = {.idx = 0};
     pthread_t pthread[__THREADS_DEFAULT_];
 
-    while ((opt = getopt (argc, argv, "c:?")) != -1)
+    while((opt = getopt(argc, argv, "c:?")) != -1)
         switch (opt) {
         case 'c':
             __MALLOC(configFile, char*, sizeof(char) * (strlen(optarg) + 1));
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    setlogmask (LOG_UPTO (LOG_NOTICE));
+    setlogmask(LOG_UPTO(LOG_NOTICE));
     openlog("tftp-mass-get", LOG_CONS | LOG_PID | LOG_NDELAY, __LOG_FACILITY);
 
     config_init(&config);
