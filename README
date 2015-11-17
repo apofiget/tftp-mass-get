@@ -3,8 +3,8 @@ TFTP mass get utility v0.4
 Description
 -----------
 
-TFTP client, which get remote files(pre-configured) from TFTP-enabled devices and
-save them in pre-configured directory, and, if configured, add date/time prefix to the filename.
+TFTP client, which retreive remote files(pre-configured) from TFTP-enabled devices and
+save them in pre-configured directory, and, if needed, add date/time prefix to the filename.
 Could be used as backup agent for TFTP-enabled network devices which don't have own TFTP client.
 We use it for backup configuration from Mikrotik devices.
 
@@ -34,11 +34,11 @@ It should look like:
 
 sources
 {
-ip = "10.245.177.21"; - IP address of device from download file, mandatory parameter
-file = "srkn-AP.backup"; - filename to download from given IP, mandatory parameter
-saveWithTime = 1; - save file with date/time prefix like DD-MM-YYYY-HH-MM, optional parameter
-dateTemplate = "" - prefix template, according man 3 strftime; hardcoded template - "%Y%m%d-%H%M-", optional parameter
-savePath = ""; - absolute path to directory where save downloaded files, optional parameter in sources section
+    ip = "10.245.177.21"; - IP address of device from download file, mandatory parameter
+    file = "srkn-AP.backup"; - filename to download from given IP, mandatory parameter
+    saveWithTime = 1; - save file with date/time prefix like DD-MM-YYYY-HH-MM, optional parameter
+    dateTemplate = "" - prefix template, according man 3 strftime; hardcoded template - "%Y%m%d-%H%M-", optional parameter
+    savePath = ""; - absolute path to directory where save downloaded files, optional parameter in sources section
 }
 
 See example.cfg for details.
