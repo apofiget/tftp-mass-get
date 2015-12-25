@@ -21,6 +21,16 @@ How to build?
 
 Just run: ./build.sh
 
+How to run?
+-----------
+
+./tftp_mass_get <arguments>
+
+Arguments:
+
+-c /config/file   -  config file name with full path, mandatory
+-m                -  use mutex instead spinlock, should be used on non-SMP systems, optional
+
 Configuration params
 --------------------
 

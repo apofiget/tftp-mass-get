@@ -5,10 +5,10 @@
  * Author: Andrey Andruschenko
  * Maintainer:
  * Created: Вт июн 30 14:55:38 2015 (+0300)
- * Version: 0.1
+ * Version: 0.4.1
  * Last-Updated:
  *           By:
- *     Update #: 334
+ *     Update #: 352
  * URL: https://github.com/Apofiget/tftp-mass-get
  * Keywords:  TFTP, backup
  * Compatibility:
@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <pthread.h>
 #include <syslog.h>
 #include <fcntl.h>
@@ -41,7 +42,9 @@ static size_t wc_cb(void*, size_t, size_t, void*);
 static void *get_request(void*);
 static char *get_formated_date(const char*);
 
+u_int8_t use_mutex = 0;
 pthread_mutex_t idx_mtx;
+pthread_spinlock_t lock;
 
 int main(int argc, char *argv[]) {
 
@@ -53,8 +56,11 @@ int main(int argc, char *argv[]) {
     f_list_t list = {.idx = 0};
     pthread_t pthread[__THREADS_DEFAULT_];
 
-    while((opt = getopt(argc, argv, "c:?")) != -1)
+    while((opt = getopt(argc, argv, "mc:?")) != -1)
         switch (opt) {
+        case 'm':
+            use_mutex = 1;
+            break;
         case 'c':
             __MALLOC(configFile, char*, sizeof(char) * (strlen(optarg) + 1));
             strcpy(configFile, optarg);
@@ -64,7 +70,7 @@ int main(int argc, char *argv[]) {
         }
 
     if(configFile == NULL) {
-        fprintf(stdout, "Usage: tftp-mass-get -c <config file>\n");
+        fprintf(stdout, "Usage: tftp-mass-get -c <config file> [-m]\n");
         exit(EXIT_FAILURE);
     }
 
@@ -168,7 +174,10 @@ int main(int argc, char *argv[]) {
 
     syslog(LOG_NOTICE, "Files to download: %d, threads: %d", list.idx, runThreads);
 
-    pthread_mutex_init(&idx_mtx, NULL);
+    if(use_mutex)
+        pthread_mutex_init(&idx_mtx, NULL);
+    else
+        pthread_spin_init(&lock, PTHREAD_PROCESS_PRIVATE);
 
     for(i = 0; i < runThreads; i++) {
         if(pthread_create(&pthread[i], NULL, get_request, &list)) {
@@ -205,11 +214,18 @@ void *get_request(void *arg) {
     }
 
     while(list->idx > 0) {
+        if(use_mutex)
+            pthread_mutex_lock(&idx_mtx);
+        else
+            pthread_spin_lock(&lock);
 
-        pthread_mutex_lock(&idx_mtx);
         cur_idx = list->idx - 1;
         list->idx--;
-        pthread_mutex_unlock(&idx_mtx);
+
+        if(use_mutex)
+            pthread_mutex_unlock(&idx_mtx);
+        else
+            pthread_spin_unlock(&lock);
 
         /* tftp://$ip/$filename + \0 */
         __MALLOC(url, char*, sizeof(char) *(strlen(list->links[cur_idx]->ip) + strlen(list->links[cur_idx]->filename) + 9));
